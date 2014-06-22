@@ -68,6 +68,7 @@ func wsHandler(res http.ResponseWriter, req *http.Request){
 			go process(data,db,conn)
 		} else if err != nil {
 			log.Println(err)
+			return
 		}
 		time.Sleep(1*time.Second)
 	}
