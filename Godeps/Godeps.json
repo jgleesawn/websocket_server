@@ -1,0 +1,14 @@
+{
+	"ImportPath": "websocket/server",
+	"GoVersion": "go1.1.2",
+	"Deps": [
+		{
+			"ImportPath": "github.com/gorilla/websocket",
+			"Rev": "efd7f76a14d91b4a8e9597306f554305ac9b0b9b"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Rev": "ae7391529ced9c12f06bf01eae33dadb4c70e49f"
+		}
+	]
+}
