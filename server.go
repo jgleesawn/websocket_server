@@ -45,7 +45,13 @@ func main() {
 	}
 }
 func webHandler(res http.ResponseWriter, req *http.Request){
-	fmt.Fprintln(res, "webpage")
+	url := `onelyfe.herokuapp.com`
+	url = req.Host
+	fmt.Fprintln(res, `<script type='text/javascript'> ws = new WebSocket('ws://`+url+`/ws'); ws.onmessage = function (event) {document.getElementById("txt").innerHTML = event.data;}; function get(){ ws.send("get "+document.getElementById("name").value) }; function store(){ ws.send("store "+document.getElementById("name").value+" "+document.getElementById("age").value); }; </script>`)
+	fmt.Fprintln(res, "name:<input type='text' id='name' name='name' value='oldman'>age:<input type='text' id='age' name='age' value='132'>")
+	fmt.Fprintln(res, "<button onclick='get()'>get</button>")
+	fmt.Fprintln(res, "<button onclick='store()'>store</button>")
+	fmt.Fprintln(res, "<div id='txt'></div>")
 }
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
