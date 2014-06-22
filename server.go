@@ -60,9 +60,8 @@ func wsHandler(res http.ResponseWriter, req *http.Request){
 		_,data,err := conn.ReadMessage()
 		if len(data) > 0{
 			go process(data,db,conn)
-		}
-		if err != nil {
-			panic(err)
+		} else if err != nil {
+			log.Println(err)
 		}
 		time.Sleep(1*time.Second)
 	}
@@ -72,27 +71,33 @@ func process(data []byte, db *sql.DB, conn *websocket.Conn){
 	str := strings.Fields(string(data))
 	fmt.Println(str)
 	var age int
-	var name []byte
-	switch str[0] {
+	name := make([]byte,50)
+	switch string(str[0]) {
 		case "get":
-//			fmt.Println("get")
-			copy(name,[]byte(str[1]))
-			fmt.Println(string(name))
-rows, err := db.Query(`SELECT name, age FROM users WHERE name = $1;`,string(name))
+			l := copy(name,str[1])
+rows, err := db.Query(`SELECT name, age FROM users WHERE name = $1;`,name[0:l])
 			if err != nil {
-				panic(err)
+				log.Println(err)
+conn.WriteMessage(mt,[]byte("process switch case 'get' DB select error."))
+				return
 			}
 			rows.Next()
 			rows.Scan(&name,&age)
 out := []byte(string(name)+" is "+strconv.Itoa(age)+" years old.")
 			conn.WriteMessage(mt,out)
 			break;
+
 		case "store":
-			copy(name,[]byte(str[1]))
-			age,_ := strconv.Atoi(string(str[2]))
-db.QueryRow(`INSERT INTO users VALUES($1,$2);`,string(name),int(age))
-			fmt.Println(string(name))
-			fmt.Println(strconv.Itoa(age))
+			l := copy(name,str[1])
+			age,err := strconv.Atoi(string(str[2]))
+			if err != nil {
+				log.Println(err)
+				return
+			}
+db.QueryRow(`INSERT INTO users VALUES($1,$2);`,name[0:l],int(age))
+			mt = websocket.TextMessage
+			out := "Row Inserted."
+			conn.WriteMessage(mt,[]byte(out))
 			break;
 	}
 }
