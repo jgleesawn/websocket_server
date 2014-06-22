@@ -1,0 +1,4 @@
+Requires postgresql with user in it and db_name that user can write to.
+Requires environment variable:
+DATABASE_URL=postgres://user:password@address/db_name
+meant to work with heroku's postgresql system.
