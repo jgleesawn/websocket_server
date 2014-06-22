@@ -10,12 +10,25 @@ import (
 	"github.com/gorilla/websocket"
 
 	"database/sql"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 
 	"strings"
 	"strconv"
 
 )
+
+func openDB() *sql.DB {
+	url := os.Getenv("DATABASE_URL")
+	connection, _ := pq.ParseURL(url)
+	connection += " sslmode=require"
+
+	db, err := sql.Open("postgres", connection)
+	if err != nil {
+		log.Println(err)
+	}
+
+	return db
+}
 
 func main() {
 
@@ -30,7 +43,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-//		go handleConnection(conn)
 }
 func webHandler(res http.ResponseWriter, req *http.Request){
 	fmt.Fprintln(res, "webpage")
@@ -48,13 +60,7 @@ func wsHandler(res http.ResponseWriter, req *http.Request){
 	mt := websocket.TextMessage
 	conn.WriteMessage(mt,[]byte("Websocket connected."))
 
-	db_url := os.Getenv("DATABASE_URL")
-	db_name := "websocket_db"
-	sslmode := "sslmode=disable"
-	db, err := sql.Open("postgres", db_url+"/"+db_name+"?"+sslmode)
-	if err != nil {
-		panic(err)
-	}
+	db := openDB()
 
 	for {
 		_,data,err := conn.ReadMessage()
