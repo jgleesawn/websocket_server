@@ -11,11 +11,91 @@ import (
 
 	"database/sql"
 	"github.com/lib/pq"
+	//"github.com/jmoiron/sqlx"
 
 	"strings"
 	"strconv"
+	"reflect"
 
 )
+/*
+type Quest struct {
+	Questid		int
+	Name		[]byte
+	Description	[]byte
+	Category	[]byte
+	Recurring	bool
+	Xpvalue		int
+	Requiredquests	[]int
+	Attributes	[][]byte
+}*/
+
+/*
+func (quest Quest) New(qid int, name string, desc string, cat string, rec bool, xpval int, reqquests []int, attr []string) {
+	quest.Questid = qid
+	quest.Name= name
+	quest.Description = desc
+	quest.Category = cat
+	quest.Recurring = rec
+	quest.Xpvalue = xpval
+	quest.Requiredquests = reqquests
+	quest.Attributes = attr
+}*/
+type Quest struct {
+	Questid		int
+	Name		string
+	Description	string
+	Category	string
+	Recurring	bool
+	Xpvalue		int
+	Requiredquests	[]int
+	Attributes	[]string
+}
+func (quest Quest) New(qid int, name string, desc string, cat string, rec bool, xpval int, reqquests []int, attr []string) {
+	quest.Questid = qid
+	quest.Name= name
+	quest.Description = desc
+	quest.Category = cat
+	quest.Recurring = rec
+	quest.Xpvalue = xpval
+	quest.Requiredquests = reqquests
+	quest.Attributes = attr
+}
+/*
+type User struct {
+	Username	[]byte
+	Firstname	[]byte
+	Lastname	[]byte
+	Xp		int
+	Completedquests	[]int
+	Attributes	[][]byte
+}*/
+
+/*
+func (user User) New(u string,f string, l string, a []string) {
+	user.Username = u
+	user.Firstname = f
+	user.Lastname = l
+	user.Xp = 0
+	user.Completedquests = make([]int,0)
+	user.Attributes = a
+}*/
+type User struct {
+	Username	string	`db:"Username"`
+	Firstname	string	`db:"Firstname"`
+	Lastname	string	`db:"Lastname"`
+	Xp		int	`db:"Xp"`
+	Completedquests	[]int	`db:"Completedquests"`
+	Attributes	[]string `db:"Attributes"`
+}
+func (user User) New(u string,f string, l string, a []string) {
+	user.Username = u
+	user.Firstname = f
+	user.Lastname = l
+	user.Xp = 0
+	user.Completedquests = make([]int,0)
+	user.Attributes = a
+}
 
 func openDB() *sql.DB {
 	url := os.Getenv("DATABASE_URL")
@@ -89,48 +169,191 @@ func process(data []byte, db *sql.DB, conn *websocket.Conn){
 	mt := websocket.TextMessage
 	str := strings.Fields(string(data))
 	//fmt.Println(str)
-	var age int
-	name := make([]byte,50)
-	switch string(str[0]) {
-		case "get":
-			l := copy(name,str[1])
-rows, err := db.Query(`SELECT name, age FROM users WHERE name = $1;`,name[0:l])
-			if err != nil {
-				log.Println(err)
-conn.WriteMessage(mt,[]byte("process switch case 'get' DB select error."))
-				return
+	switch str[0]+" "+str[1] {
+		case "add user":
+			fmt.Println(len(str))
+			fmt.Println(str[5:len(str)])
+			u := User{str[2],str[3],str[4],0,[]int{0},str[5:len(str)]}
+			fmt.Println(u.Attributes)
+//			u.New(str[2],str[3],str[4],str[5:len(str)])
+			success := addUser(db,&u)
+			if !success {
+			conn.WriteMessage(mt,[]byte("Couldn't add user."))
 			}
-			rows.Next()
-			rows.Scan(&name,&age)
-out := []byte(string(name)+" is "+strconv.Itoa(age)+" years old.")
-			conn.WriteMessage(mt,out)
-			break;
-
-		case "store":
-			l := copy(name,str[1])
-			age,err := strconv.Atoi(string(str[2]))
-			if err != nil {
-				log.Println(err)
-				return
+		case "add quest":
+			str = strings.Split(string(data),";")
+			recurring := strings.Fields(str[4])[0] == "true"
+			xpval,_ := strconv.Atoi(strings.Fields(str[5])[0])
+			rq := strings.Split(str[6],",")
+			for i := range rq {
+				rq[i] = strings.TrimSpace(rq[i])
 			}
-db.QueryRow(`INSERT INTO users VALUES($1,$2);`,name[0:l],int(age))
-			mt = websocket.TextMessage
-			out := "Row Inserted."
-			conn.WriteMessage(mt,[]byte(out))
-			break;
-		case "all":
-rows,err := db.Query(`SELECT * FROM users`)
-			if err != nil {
-				log.Println(err)
-				return
+			rqint := make([]int,0,len(rq))
+			for i := range rq {
+				temp,_ := strconv.Atoi(rq[i])
+				rqint = append(rqint,temp)
 			}
-			for rows.Next() {
-				rows.Scan(&name,&age)
-				mt = websocket.TextMessage
-out := []byte("Name: "+string(name)+" Age: "+strconv.Itoa(age))
-				conn.WriteMessage(mt,out)
-			}
+			fmt.Println(len(str))
+			attr := strings.Fields(str[7])
+//str[0] is command:   add quest;
+			q := Quest{0,str[1],str[2],str[3],recurring,xpval,rqint,attr}
+			addQuest(db,&q)
 	}
 }
 
+func addAuth(db *sql.DB,username string,password string) (bool) {
+_,err := db.Query(`INSERT INTO auth VALUES($1,$2);`,username,password) 
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
+}
+func intAtoStr(a []int)(string) {
+	if len(a) == 0 {
+		return ""
+	}
+	str := make([]byte,2*len(a)-1)
+	for i := range a[0:len(a)-1] {
+		str[2*i] = []byte(strconv.Itoa(a[i]))[0]
+		str[2*i+1] = ','
+	}
+	str[len(str)-1] = []byte(strconv.Itoa(a[len(a)-1]))[0]
+	return string(str)
+}
+func strAtoStr(a []string)(string) {
+/*	if len(a) == 0 {
+		return ""
+	}
+	l := 0
+	for i := range(a) {
+		l += len(a[i])
+	}
+	str := make([]byte,l+len(a)-1)
+	l = 0
+	for i := range a[0:len(a)-1] {
+		copy(str[l:l+len(a[i])],a[i])
+		l += len(a[i])
+		str[l] = ','
+		l+=1
+	}
+	copy(str[l:len(a[len(a)-1])],a[len(a)-1])
+	*/
+	str := "'"+strings.Join(a,"', '")+"'"
+	return string(str)
+}
+func addUser(db *sql.DB,u *User) (bool){
+	strq := []string{`INSERT INTO users VALUES(`,`,`,`,`,`,`,`, ARRAY[`,`],ARRAY[`,`]);`}
+	str,varargs := unroll_query(strq,u.Username,u.Firstname,u.Lastname,u.Xp,u.Completedquests,u.Attributes)
+	_,err := db.Query(str,varargs...)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
+}
 
+func addQuest(db *sql.DB,q *Quest) (bool) {
+row := db.QueryRow(`SELECT questid FROM quests ORDER BY questid DESC LIMIT 1;`)
+	var prev_id int
+	err := row.Scan(&prev_id)
+	if err != nil {
+		q.Questid = 0
+	} else {
+		q.Questid = prev_id + 1
+	}
+	strq := []string{`INSERT INTO quests VALUES(`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`);`}
+	str,varargs := unroll_query(strq,q.Questid,q.Name,q.Description,q.Category,q.Recurring,q.Xpvalue,q.Requiredquests,q.Attributes)
+	fmt.Println(str,varargs)
+	_,err = db.Query(str,varargs...)
+//_,err = db.Query(`INSERT INTO quests VALUES($1,$2,$3,$4,$5,$6,$7,$8`,q.Questid,q.Name,q.Description,q.Category,q.Recurring,q.Xpvalue,q.Requiredquests,q.Attributes)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
+}
+/*
+func getQuestByQid(db *sql.DB,qid int) (*Quest) {
+	quest := Quest{}
+	err := db.Get(&quest,`SELECT * FROM quests WHERE questid = $1`,qid)
+	if err != nil {
+		log.Println(err)
+	}
+	return &quest
+}
+func getQuestByName(db *sql.DB,name string) ([]Quest){
+	quests := []Quest{}
+	err := db.Select(&quests,`SELECT * FROM quests WHERE name = $1`,name)
+	if err != nil {
+		log.Println(err)
+	}
+	return quests
+}
+func getQuestByCategory(db *sql.DB,category string) ([]Quest) {
+	quests := []Quest{}
+	err := db.Select(&quests,`SELECT * FROM quests WHERE category = $1`,category)
+	if err != nil {
+		log.Println(err)
+	}
+	return quests
+}
+*/
+func unroll_query(strq []string, varargs ...interface{}) (string,[]interface{}) {
+	stro := ""
+	argo := make([]interface{},0,len(strq)-1)
+	count := 1
+	for i := range varargs {
+		stro += strq[i]
+		k := reflect.ValueOf(varargs[i])
+		if k.Kind() == reflect.Slice || k.Kind() == reflect.Array {
+		   if k.Len() > 0 {
+			for c := 0; c < k.Len()-1; c++ {
+				v := reflect.ValueOf(k.Index(c).Interface())
+//				if v.Kind() == reflect.String {
+//					stro += `'`
+//				}
+				fmt.Println(v.Kind())
+				argo = append(argo,k.Index(c).Interface())
+				stro += `$`+strconv.Itoa(count)
+				count++
+				if v.Kind() == reflect.Int {
+					stro += `::integer`
+				}
+//				if v.Kind() == reflect.String {
+//					stro += `'`
+//				}
+				stro += `,`
+			}
+			v := reflect.ValueOf(k.Index(k.Len()-1).Interface())
+			fmt.Println(v.Kind())
+//			if v.Kind() == reflect.String {
+//				stro += `'`
+//			}
+			stro += `$`+strconv.Itoa(count)
+			count++
+			if v.Kind() == reflect.Int {
+				stro+= `::integer`
+			}
+//			if v.Kind() == reflect.String {
+//				stro += `'`
+//			}
+
+			argo = append(argo,k.Index(k.Len()-1).Interface())
+		   }
+		} else {
+			stro += `$`+strconv.Itoa(count )
+			count++
+			argo = append(argo,varargs[i])
+		}
+	}
+	stro += strq[len(strq)-1]
+	fmt.Println(stro)
+	for i := range argo {
+		k := reflect.ValueOf(argo[i]).Kind()
+		fmt.Println(k,": ",argo[i])
+	}
+	fmt.Println(len(argo))
+	fmt.Println(argo)
+	return stro,argo
+}
