@@ -262,7 +262,7 @@ row := db.QueryRow(`SELECT questid FROM quests ORDER BY questid DESC LIMIT 1;`)
 	} else {
 		q.Questid = prev_id + 1
 	}
-	strq := []string{`INSERT INTO quests VALUES(`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`);`}
+	strq := []string{`INSERT INTO quests VALUES(`,`,`,`,`,`,`,`,`,`,`,`,ARRAY[`,`],ARRAY[`,`]);`}
 	str,varargs := unroll_query(strq,q.Questid,q.Name,q.Description,q.Category,q.Recurring,q.Xpvalue,q.Requiredquests,q.Attributes)
 	fmt.Println(str,varargs)
 	_,err = db.Query(str,varargs...)
