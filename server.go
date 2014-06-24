@@ -170,17 +170,13 @@ func process(data []byte, db *sql.DB, conn *websocket.Conn){
 	str := strings.Fields(string(data))
 	//fmt.Println(str)
 	switch str[0]+" "+str[1] {
-		case "add user":
-			fmt.Println(len(str))
-			fmt.Println(str[5:len(str)])
+		case "add User":
 			u := User{str[2],str[3],str[4],0,[]int{0},str[5:len(str)]}
-			fmt.Println(u.Attributes)
-//			u.New(str[2],str[3],str[4],str[5:len(str)])
 			success := addUser(db,&u)
 			if !success {
 			conn.WriteMessage(mt,[]byte("Couldn't add user."))
 			}
-		case "add quest":
+		case "add Quest":
 			str = strings.Split(string(data),";")
 			recurring := strings.Fields(str[4])[0] == "true"
 			xpval,_ := strconv.Atoi(strings.Fields(str[5])[0])
@@ -193,9 +189,8 @@ func process(data []byte, db *sql.DB, conn *websocket.Conn){
 				temp,_ := strconv.Atoi(rq[i])
 				rqint = append(rqint,temp)
 			}
-			fmt.Println(len(str))
 			attr := strings.Fields(str[7])
-//str[0] is command:   add quest;
+			attr = append(attr,"")
 			q := Quest{0,str[1],str[2],str[3],recurring,xpval,rqint,attr}
 			addQuest(db,&q)
 	}
@@ -209,39 +204,7 @@ _,err := db.Query(`INSERT INTO auth VALUES($1,$2);`,username,password)
 	}
 	return true
 }
-func intAtoStr(a []int)(string) {
-	if len(a) == 0 {
-		return ""
-	}
-	str := make([]byte,2*len(a)-1)
-	for i := range a[0:len(a)-1] {
-		str[2*i] = []byte(strconv.Itoa(a[i]))[0]
-		str[2*i+1] = ','
-	}
-	str[len(str)-1] = []byte(strconv.Itoa(a[len(a)-1]))[0]
-	return string(str)
-}
-func strAtoStr(a []string)(string) {
-/*	if len(a) == 0 {
-		return ""
-	}
-	l := 0
-	for i := range(a) {
-		l += len(a[i])
-	}
-	str := make([]byte,l+len(a)-1)
-	l = 0
-	for i := range a[0:len(a)-1] {
-		copy(str[l:l+len(a[i])],a[i])
-		l += len(a[i])
-		str[l] = ','
-		l+=1
-	}
-	copy(str[l:len(a[len(a)-1])],a[len(a)-1])
-	*/
-	str := "'"+strings.Join(a,"', '")+"'"
-	return string(str)
-}
+
 func addUser(db *sql.DB,u *User) (bool){
 	strq := []string{`INSERT INTO users VALUES(`,`,`,`,`,`,`,`, ARRAY[`,`],ARRAY[`,`]);`}
 	str,varargs := unroll_query(strq,u.Username,u.Firstname,u.Lastname,u.Xp,u.Completedquests,u.Attributes)
@@ -266,7 +229,6 @@ row := db.QueryRow(`SELECT questid FROM quests ORDER BY questid DESC LIMIT 1;`)
 	str,varargs := unroll_query(strq,q.Questid,q.Name,q.Description,q.Category,q.Recurring,q.Xpvalue,q.Requiredquests,q.Attributes)
 	fmt.Println(str,varargs)
 	_,err = db.Query(str,varargs...)
-//_,err = db.Query(`INSERT INTO quests VALUES($1,$2,$3,$4,$5,$6,$7,$8`,q.Questid,q.Name,q.Description,q.Category,q.Recurring,q.Xpvalue,q.Requiredquests,q.Attributes)
 	if err != nil {
 		log.Println(err)
 		return false
@@ -299,6 +261,9 @@ func getQuestByCategory(db *sql.DB,category string) ([]Quest) {
 	return quests
 }
 */
+//takes comma seperated query, seperations lie on variable placement
+//fills out this query with $1 $2 etc.
+//unrolls arrays and slices in varargs, so you can insert arrays
 func unroll_query(strq []string, varargs ...interface{}) (string,[]interface{}) {
 	stro := ""
 	argo := make([]interface{},0,len(strq)-1)
@@ -319,10 +284,9 @@ func unroll_query(strq []string, varargs ...interface{}) (string,[]interface{}) 
 				count++
 				if v.Kind() == reflect.Int {
 					stro += `::integer`
+				} else if v.Kind() == reflect.String {
+					stro += `::text`
 				}
-//				if v.Kind() == reflect.String {
-//					stro += `'`
-//				}
 				stro += `,`
 			}
 			v := reflect.ValueOf(k.Index(k.Len()-1).Interface())
@@ -334,10 +298,9 @@ func unroll_query(strq []string, varargs ...interface{}) (string,[]interface{}) 
 			count++
 			if v.Kind() == reflect.Int {
 				stro+= `::integer`
+			} else if v.Kind() == reflect.String {
+				stro += `::text`
 			}
-//			if v.Kind() == reflect.String {
-//				stro += `'`
-//			}
 
 			argo = append(argo,k.Index(k.Len()-1).Interface())
 		   }
