@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"reflect"
 
+	"encoding/json"
+
 )
 /*
 type Quest struct {
@@ -155,9 +157,10 @@ func wsHandler(res http.ResponseWriter, req *http.Request){
 	db := openDB()
 
 	for {
+	//	fmt.Println(reflect.ValueOf(conn.ReadMessage).Type())
 		_,data,err := conn.ReadMessage()
 		if len(data) > 0{
-			go process(data,db,conn)
+			process(data,db,conn)
 		} else if err != nil {
 			log.Println(err)
 			return
@@ -167,32 +170,68 @@ func wsHandler(res http.ResponseWriter, req *http.Request){
 }
 func process(data []byte, db *sql.DB, conn *websocket.Conn){
 	mt := websocket.TextMessage
-	str := strings.Fields(string(data))
+	str := strings.Split(string(data),";")
+	cmd := strings.Fields(str[0])
 	//fmt.Println(str)
-	switch str[0]+" "+str[1] {
+	switch strings.Join(cmd," ") {
+		//case "add Auth":
 		case "add User":
-			u := User{str[2],str[3],str[4],0,[]int{0},str[5:len(str)]}
+			u := User{}
+			err := json.Unmarshal([]byte(str[1]),&u)
+			if err != nil {
+				log.Println("Struct doesn't match command.")
+			}
+			u.Xp = 0
+			u.Completedquests = []int{0}
 			success := addUser(db,&u)
-			if !success {
+			if success {
+			conn.WriteMessage(mt,[]byte("User added."))
+			} else {
 			conn.WriteMessage(mt,[]byte("Couldn't add user."))
 			}
+			break
 		case "add Quest":
-			str = strings.Split(string(data),";")
-			recurring := strings.Fields(str[4])[0] == "true"
-			xpval,_ := strconv.Atoi(strings.Fields(str[5])[0])
-			rq := strings.Split(str[6],",")
-			for i := range rq {
-				rq[i] = strings.TrimSpace(rq[i])
+			q := Quest{}
+			err := json.Unmarshal([]byte(str[1]),&q)
+			if err != nil {
+				log.Println("Struct doesn't match command.")
 			}
-			rqint := make([]int,0,len(rq))
-			for i := range rq {
-				temp,_ := strconv.Atoi(rq[i])
-				rqint = append(rqint,temp)
+			q.Attributes = append(q.Attributes,"")
+			fmt.Println(q.Attributes)
+			success := addQuest(db,&q)
+			if success {
+			conn.WriteMessage(mt,[]byte("Quest added."))
+			} else {
+			conn.WriteMessage(mt,[]byte("Error on adding quest."))
 			}
-			attr := strings.Fields(str[7])
-			attr = append(attr,"")
-			q := Quest{0,str[1],str[2],str[3],recurring,xpval,rqint,attr}
-			addQuest(db,&q)
+			break
+		//case "update Auth":
+		case "update User":
+			u := User{}
+			err := json.Unmarshal([]byte(str[1]),&u)
+			if err != nil {
+				log.Println("Struct doesn't match command.")
+			}
+			success := updateUser(db,&u)
+			if success {
+			conn.WriteMessage(mt,[]byte("User Updated."))
+			} else {
+			conn.WriteMessage(mt,[]byte("Error on Updating User."))
+			}
+			break
+		case "update Quest":
+			q := Quest{}
+			err := json.Unmarshal([]byte(str[1]),&q)
+			if err != nil {
+				log.Println("Struct doesn't match command.")
+			}
+			success := updateQuest(db,&q)
+			if success {
+			conn.WriteMessage(mt,[]byte("Quest Updated."))
+			} else {
+			conn.WriteMessage(mt,[]byte("Error on Updating Quest."))
+			}
+			break
 	}
 }
 
@@ -235,6 +274,31 @@ row := db.QueryRow(`SELECT questid FROM quests ORDER BY questid DESC LIMIT 1;`)
 	}
 	return true
 }
+
+func updateUser(db *sql.DB,u *User) (bool){
+	strq := []string{`UPDATE users SET (firstname, lastname, xp, completedquests, attributes) = (`,`,`,`,`,`,ARRAY[`,`],ARRAY[`,`]) WHERE username = `,`;`}
+	str,varargs := unroll_query(strq,u.Firstname,u.Lastname,u.Xp,u.Completedquests,u.Attributes,u.Username)
+	_,err := db.Query(str,varargs...)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
+}
+
+func updateQuest(db *sql.DB,q *Quest) (bool){
+	strq := []string{`UPDATE quests SET (name, description, category, recurring, xpvalue, requiredquests, attributes) = (`,`,`,`,`,`,`,`,`,`,ARRAY[`,`],ARRAY[`,`]) WHERE questid = `,`;`}
+	str,varargs := unroll_query(strq,q.Name,q.Description,q.Category,q.Recurring,q.Xpvalue,q.Requiredquests,q.Attributes,q.Questid)
+	_,err := db.Query(str,varargs...)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
+}
+
+
+
 /*
 func getQuestByQid(db *sql.DB,qid int) (*Quest) {
 	quest := Quest{}
