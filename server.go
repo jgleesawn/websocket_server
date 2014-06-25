@@ -1,5 +1,5 @@
 package main
-
+//Quest and Users must have one element in their arrays if you are trying to add or update
 import (
 	"fmt"
 	"os"
@@ -196,8 +196,8 @@ func process(data []byte, db *sql.DB, conn *websocket.Conn){
 			if err != nil {
 				log.Println("Struct doesn't match command.")
 			}
-			q.Attributes = append(q.Attributes,"")
-			fmt.Println(q.Attributes)
+//Removed for consistency with updateQuest
+//			q.Attributes = append(q.Attributes,"")
 			success := addQuest(db,&q)
 			if success {
 			conn.WriteMessage(mt,[]byte("Quest added."))
@@ -266,7 +266,6 @@ row := db.QueryRow(`SELECT questid FROM quests ORDER BY questid DESC LIMIT 1;`)
 	}
 	strq := []string{`INSERT INTO quests VALUES(`,`,`,`,`,`,`,`,`,`,`,`,ARRAY[`,`],ARRAY[`,`]);`}
 	str,varargs := unroll_query(strq,q.Questid,q.Name,q.Description,q.Category,q.Recurring,q.Xpvalue,q.Requiredquests,q.Attributes)
-	fmt.Println(str,varargs)
 	_,err = db.Query(str,varargs...)
 	if err != nil {
 		log.Println(err)
@@ -289,6 +288,7 @@ func updateUser(db *sql.DB,u *User) (bool){
 func updateQuest(db *sql.DB,q *Quest) (bool){
 	strq := []string{`UPDATE quests SET (name, description, category, recurring, xpvalue, requiredquests, attributes) = (`,`,`,`,`,`,`,`,`,`,ARRAY[`,`],ARRAY[`,`]) WHERE questid = `,`;`}
 	str,varargs := unroll_query(strq,q.Name,q.Description,q.Category,q.Recurring,q.Xpvalue,q.Requiredquests,q.Attributes,q.Questid)
+//	fmt.Println(str)
 	_,err := db.Query(str,varargs...)
 	if err != nil {
 		log.Println(err)
@@ -342,7 +342,7 @@ func unroll_query(strq []string, varargs ...interface{}) (string,[]interface{}) 
 //				if v.Kind() == reflect.String {
 //					stro += `'`
 //				}
-				fmt.Println(v.Kind())
+//				fmt.Println(v.Kind())
 				argo = append(argo,k.Index(c).Interface())
 				stro += `$`+strconv.Itoa(count)
 				count++
@@ -354,7 +354,7 @@ func unroll_query(strq []string, varargs ...interface{}) (string,[]interface{}) 
 				stro += `,`
 			}
 			v := reflect.ValueOf(k.Index(k.Len()-1).Interface())
-			fmt.Println(v.Kind())
+//			fmt.Println(v.Kind())
 //			if v.Kind() == reflect.String {
 //				stro += `'`
 //			}
@@ -375,12 +375,13 @@ func unroll_query(strq []string, varargs ...interface{}) (string,[]interface{}) 
 		}
 	}
 	stro += strq[len(strq)-1]
+	fmt.Println("Unrolled: ")
 	fmt.Println(stro)
 	for i := range argo {
 		k := reflect.ValueOf(argo[i]).Kind()
 		fmt.Println(k,": ",argo[i])
 	}
-	fmt.Println(len(argo))
-	fmt.Println(argo)
+//	fmt.Println(len(argo))
+//	fmt.Println(argo)
 	return stro,argo
 }
