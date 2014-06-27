@@ -19,6 +19,7 @@ import (
 
 	"encoding/json"
 
+	"ECC_Conn"
 )
 /*
 type Quest struct {
@@ -152,6 +153,16 @@ func wsHandler(res http.ResponseWriter, req *http.Request){
 		return
 	}
 	mt := websocket.TextMessage
+
+	var dh_conn ECC_Conn.ECC_Conn
+	dh_conn.Connect(conn)
+	dh_conn.Write([]byte(strings.Repeat("Test",8)))
+	//
+	buf := make([]byte,1024)
+	dh_conn.Read(buf)
+	fmt.Println(string(buf))
+	fmt.Println("Outside diffie.")
+
 	conn.WriteMessage(mt,[]byte("Websocket connected."))
 
 	db := openDB()
