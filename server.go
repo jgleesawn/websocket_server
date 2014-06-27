@@ -152,26 +152,21 @@ func wsHandler(res http.ResponseWriter, req *http.Request){
 		log.Println(err)
 		return
 	}
-	mt := websocket.TextMessage
 
-	var dh_conn ECC_Conn.ECC_Conn
+	dh_conn := new(ECC_Conn.ECC_Conn)
 	dh_conn.Connect(conn)
-	dh_conn.Write([]byte(strings.Repeat("Test",8)))
-	//
-	buf := make([]byte,1024)
-	dh_conn.Read(buf)
-	fmt.Println(string(buf))
 	fmt.Println("Outside diffie.")
 
-	conn.WriteMessage(mt,[]byte("Websocket connected."))
+	dh_conn.Write([]byte("Websocket connected."))
 
 	db := openDB()
 
+	data := make([]byte,dh_conn.PacketSize)
 	for {
-	//	fmt.Println(reflect.ValueOf(conn.ReadMessage).Type())
-		_,data,err := conn.ReadMessage()
-		if len(data) > 0{
-			process(data,db,conn)
+		//fmt.Println(reflect.ValueOf(conn.ReadMessage).Type())
+		n,err := dh_conn.Read(data)
+		if n > 0{
+			process(data[:n],db,dh_conn)
 		} else if err != nil {
 			log.Println(err)
 			return
@@ -179,8 +174,7 @@ func wsHandler(res http.ResponseWriter, req *http.Request){
 		time.Sleep(1*time.Second)
 	}
 }
-func process(data []byte, db *sql.DB, conn *websocket.Conn){
-	mt := websocket.TextMessage
+func process(data []byte, db *sql.DB, conn *ECC_Conn.ECC_Conn){
 	str := strings.Split(string(data),";")
 	cmd := strings.Fields(str[0])
 	//fmt.Println(str)
@@ -196,24 +190,26 @@ func process(data []byte, db *sql.DB, conn *websocket.Conn){
 			u.Completedquests = []int{0}
 			success := addUser(db,&u)
 			if success {
-			conn.WriteMessage(mt,[]byte("User added."))
+				conn.Write([]byte("User added."))
 			} else {
-			conn.WriteMessage(mt,[]byte("Couldn't add user."))
+				conn.Write([]byte("Couldn't add user."))
 			}
 			break
 		case "add Quest":
 			q := Quest{}
+			fmt.Println(string(str[1]))
 			err := json.Unmarshal([]byte(str[1]),&q)
 			if err != nil {
+				log.Println(err)
 				log.Println("Struct doesn't match command.")
 			}
 //Removed for consistency with updateQuest
 //			q.Attributes = append(q.Attributes,"")
 			success := addQuest(db,&q)
 			if success {
-			conn.WriteMessage(mt,[]byte("Quest added."))
+				conn.Write([]byte("Quest added."))
 			} else {
-			conn.WriteMessage(mt,[]byte("Error on adding quest."))
+				conn.Write([]byte("Error on adding quest."))
 			}
 			break
 		//case "update Auth":
@@ -225,9 +221,9 @@ func process(data []byte, db *sql.DB, conn *websocket.Conn){
 			}
 			success := updateUser(db,&u)
 			if success {
-			conn.WriteMessage(mt,[]byte("User Updated."))
+				conn.Write([]byte("User Updated."))
 			} else {
-			conn.WriteMessage(mt,[]byte("Error on Updating User."))
+				conn.Write([]byte("Error on Updating User."))
 			}
 			break
 		case "update Quest":
@@ -238,9 +234,9 @@ func process(data []byte, db *sql.DB, conn *websocket.Conn){
 			}
 			success := updateQuest(db,&q)
 			if success {
-			conn.WriteMessage(mt,[]byte("Quest Updated."))
+				conn.Write([]byte("Quest Updated."))
 			} else {
-			conn.WriteMessage(mt,[]byte("Error on Updating Quest."))
+				conn.Write([]byte("Error on Updating Quest."))
 			}
 			break
 	}
