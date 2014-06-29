@@ -3,12 +3,12 @@
 	"GoVersion": "go1.3",
 	"Deps": [
 		{
-			"ImportPath": "ECC_Conn",
-			"Rev": "a5b54a9f7000c0e5fd1ccbc3c51ff63019cc655f"
-		},
-		{
 			"ImportPath": "github.com/gorilla/websocket",
 			"Rev": "efd7f76a14d91b4a8e9597306f554305ac9b0b9b"
+		},
+		{
+			"ImportPath": "github.com/jgleesawn/ECC_Conn",
+			"Rev": "173e3ad4e73d7c43479c7678a36a43a87089a350"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
