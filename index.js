@@ -1,9 +1,8 @@
-<script type='text/javascript' src='github.com/bitwiseshiftleft/sjcl/blob/master/sjcl.js'></script>
 <script type='text/javascript'> 
-ws = new WebSocket('ws://`+url+`/noencws'); 
 ws.onmessage = function (event) {
 	curDiv = addElement();
 	document.getElementById(curDiv).innerHTML = event.data;
+	reader.readAsBinaryString(event.data);
 };
 function get(){ 
 	ws.send("get "+document.getElementById("name").value) 
@@ -32,12 +31,14 @@ function addElement() {
 	newdiv.setAttribute('id',div_id);
 	ni.appendChild(newdiv);
 	return div_id;};
-</script>
-<script type='text/javascript'> 
 function removeElements() {
 	var out = document.getElementById('output');
       	for (i = out.childElementCount-1;i>=0;i--) {
 		out.removeChild(out.childNodes[i])
 	};
 };
+var reader = new FileReader();
+reader.onload = function(e) {
+	console.log(reader.result);
+}
 </script>

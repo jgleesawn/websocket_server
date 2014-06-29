@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"io/ioutil"
 	"log"
 	"time"
 	
@@ -15,7 +16,7 @@ import (
 	//"github.com/jmoiron/sqlx"
 
 	"strings"
-	//"strconv"
+	"strconv"
 	//"reflect"
 
 	"encoding/json"
@@ -42,17 +43,12 @@ func main() {
 func webHandler(res http.ResponseWriter, req *http.Request){
 	url := `onelyfe.herokuapp.com`
 	url = req.Host
-	fmt.Fprintln(res, `<script type='text/javascript'> ws = new WebSocket('ws://`+url+`/noencws'); ws.onmessage = function (event) {curDiv = addElement(); document.getElementById(curDiv).innerHTML = event.data;}; function get(){ ws.send("get "+document.getElementById("name").value) }; function store(){ ws.send("store "+document.getElementById("name").value+" "+document.getElementById("age").value); }; function getall(){ ws.send("all");}; </script>`)
-	fmt.Fprintln(res, `<div id='input'>`)
-	fmt.Fprintln(res, "name:<input type='text' id='name' name='name' value='oldman'>age:<input type='text' id='age' name='age' value='132'>")
-	fmt.Fprintln(res, "<button onclick='get()'>Get</button>")
-	fmt.Fprintln(res, "<button onclick='store()'>Store</button>")
-	fmt.Fprintln(res, "<button onclick='getall()'>Entire Table</button>")
-	fmt.Fprintln(res, "<button onclick='removeElements()'>Clear</button>")
-	fmt.Fprintln(res, "</div>")
-	fmt.Fprintln(res, `<div id='output'></div>`)
-	fmt.Fprintln(res, `<script type='text/javascript'> function addElement() {var ni = document.getElementById('output'); var newdiv = document.createElement('div'); var div_id = Math.random().toString(36).substring(7); newdiv.setAttribute('id',div_id); ni.appendChild(newdiv); return div_id;};</script>`)
-	fmt.Fprintln(res, `<script type='text/javascript'> function removeElements() {var out = document.getElementById('output');  for (i = out.childElementCount-1;i>=0;i--) {out.removeChild(out.childNodes[i])};};</script>`)
+	fmt.Fprintln(res,`<script type='text/javascript'>ws = new WebSocket('ws://`+url+`/noencws');</script>`)
+	js_code_arr, err := ioutil.ReadFile("index.js")
+	if err != nil {
+		fmt.Fprintln(res,[]byte("Error loading page."))
+	}
+	fmt.Fprintln(res, string(js_code_arr))
 }
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -147,7 +143,13 @@ func wsHandler(res http.ResponseWriter, req *http.Request){
 
 
 func process(data []byte, db Custom_db, conn io.ReadWriter){//*ECC_Conn.ECC_Conn){
+	out := []byte("Didn't Process Command.")
 	str := strings.Split(string(data),";")
+	if len(str) < 2 {
+		out = []byte("Command missing arguments.")
+		conn.Write(out)
+		return
+	}
 	cmd := strings.Fields(str[0])
 	//fmt.Println(str)
 	switch strings.Join(cmd," ") {
@@ -157,14 +159,15 @@ func process(data []byte, db Custom_db, conn io.ReadWriter){//*ECC_Conn.ECC_Conn
 			err := json.Unmarshal([]byte(str[1]),&u)
 			if err != nil {
 				log.Println("Struct doesn't match command.")
+				break
 			}
 			u.Xp = 0
 			u.Completedquests = []int{0}
 			success := db.AddUser(&u)
 			if success {
-				conn.Write([]byte("User added."))
+				out = []byte("User added.")
 			} else {
-				conn.Write([]byte("Couldn't add user."))
+				out = []byte("Couldn't add user.")
 			}
 			break
 		case "add Quest":
@@ -174,14 +177,15 @@ func process(data []byte, db Custom_db, conn io.ReadWriter){//*ECC_Conn.ECC_Conn
 			if err != nil {
 				log.Println(err)
 				log.Println("Struct doesn't match command.")
+				break
 			}
 //Removed for consistency with updateQuest
 //			q.Attributes = append(q.Attributes,"")
 			success := db.AddQuest(&q)
 			if success {
-				conn.Write([]byte("Quest added."))
+				out = []byte("Quest added.")
 			} else {
-				conn.Write([]byte("Error on adding quest."))
+				out = []byte("Error on adding quest.")
 			}
 			break
 		//case "update Auth":
@@ -190,12 +194,13 @@ func process(data []byte, db Custom_db, conn io.ReadWriter){//*ECC_Conn.ECC_Conn
 			err := json.Unmarshal([]byte(str[1]),&u)
 			if err != nil {
 				log.Println("Struct doesn't match command.")
+				break
 			}
 			success := db.UpdateUser(&u)
 			if success {
-				conn.Write([]byte("User Updated."))
+				out = []byte("User Updated.")
 			} else {
-				conn.Write([]byte("Error on Updating User."))
+				out = []byte("Error on Updating User.")
 			}
 			break
 		case "update Quest":
@@ -203,21 +208,55 @@ func process(data []byte, db Custom_db, conn io.ReadWriter){//*ECC_Conn.ECC_Conn
 			err := json.Unmarshal([]byte(str[1]),&q)
 			if err != nil {
 				log.Println("Struct doesn't match command.")
+				break
 			}
 			success := db.UpdateQuest(&q)
 			if success {
-				conn.Write([]byte("Quest Updated."))
+				out = []byte("Quest Updated.")
 			} else {
-				conn.Write([]byte("Error on Updating Quest."))
+				out = []byte("Error on Updating Quest.")
 			}
 			break
 		case "get User":
-			strv := strings.Fields(str[1])[0]
-			fmt.Println(strv)
-			db.GetUser(strv)
+			username := string("")
+			//err := json.Unmarshal([]byte(str[1]),&username)
+			err := error(nil)
+			username = strings.Fields(str[1])[0]
+			if err != nil {
+				out = []byte("Couldn't Unmarshal request.")
+				break
+			}
+			users,err := db.GetUser(username)
+			if err != nil {
+				log.Println(err)
+				out = []byte("Error getting user from db.")
+			}
+			out,err = json.Marshal(users)
+			if err != nil {
+				out = []byte("Couldn't put users in json form.")
+				break
+			}
 			break
 		case "get Quest":
+			questid := int64(0)
+			//err := json.Unmarshal([]byte(str[1]),&questid)
+			questid, err := strconv.ParseInt(str[1],10,64)
+			if err != nil {
+				out = []byte("Couldn't Unmarshal request.")
+			}
+			quests,err := db.GetQuest(questid)
+			if err != nil {
+				log.Println(err)
+				out = []byte("Error getting quest from db.")
+			}
+			out,err = json.Marshal(quests)
+			if err != nil {
+				out = []byte("Couldn't put quests in json form.")
+				break
+			}
 			break
 	}
+	fmt.Println(out)
+	conn.Write(out)
 }
 

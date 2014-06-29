@@ -92,12 +92,11 @@ func (db *Custom_db) UpdateQuest(q *Quest) (bool){
 	return true
 }
 
-func (db *Custom_db) GetUser(u string) interface{} { //(*User){
-	var v interface{}
+func (db *Custom_db) GetUser(u string) (interface{},error) { //(*User){
 	rows,err :=db.Query(`SELECT * FROM users WHERE username = $1;`,u)
 	if err != nil {
 		log.Println(err)
-		return  v
+		return  nil,err
 	}
 
 	skel := reflect.ValueOf(User{"a","a","a",0,[]int{0},[]string{""}})
@@ -106,14 +105,13 @@ func (db *Custom_db) GetUser(u string) interface{} { //(*User){
 	for i := 0; i<len(data); i++ {
 		out[i].New(data[i])
 	}
-	return out
+	return out,nil
 }
-func (db *Custom_db) GetQuest(qid int64) interface{} {
-	var v interface{}
+func (db *Custom_db) GetQuest(qid int64) (interface{},error) {
 	rows,err := db.Query(`SELECT * FROM quests WHERE questid = $1;`,qid)
 	if err != nil {
 		log.Println(err)
-		return v
+		return nil,err
 	}
 
 	skel := reflect.ValueOf(Quest{0,"a","a","a",true,0,[]int{0},[]string{""}})
@@ -122,7 +120,7 @@ func (db *Custom_db) GetQuest(qid int64) interface{} {
 	for i := 0; i<len(data); i++ {
 		out[i].New(data[i])
 	}
-	return out
+	return out,nil
 }
 //skel is a skeleton object, of the type you want to store data in.
 //needs one value in each field

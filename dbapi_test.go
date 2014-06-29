@@ -37,9 +37,15 @@ func TestSuite(t *testing.T) {
 		t.Fail()
 	}
 
-	name := db.GetUser("testing_username")
+	name,err := db.GetUser("testing_username")
+	if err != nil {
+		t.Fail()
+	}
 	fmt.Println(name)
-	quest := db.GetQuest(1)
+	quest,err := db.GetQuest(1)
+	if err != nil {
+		t.Fail()
+	}
 	fmt.Println(quest)
 
 }
