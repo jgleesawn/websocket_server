@@ -255,8 +255,32 @@ func process(data []byte, db Custom_db, conn io.ReadWriter){//*ECC_Conn.ECC_Conn
 				break
 			}
 			break
+		case "get all Users":
+			users,err := db.GetAllUsers()
+			if err != nil {
+				log.Println(err)
+				out = []byte("Error getting users from db.")
+			}
+			out,err = json.Marshal(users)
+			if err != nil {
+				out = []byte("Couldn't put users in json form.")
+				break
+			}
+			break
+		case "get all Quests":
+			quests,err := db.GetAllQuests()
+			if err != nil {
+				log.Println(err)
+				out = []byte("Error getting quests from db.")
+			}
+			out,err = json.Marshal(quests)
+			if err != nil {
+				out = []byte("Couldn't put quests in json form.")
+				break
+			}
+			break
 	}
-	fmt.Println(out)
+	//fmt.Println(out)
 	conn.Write(out)
 }
 

@@ -122,6 +122,39 @@ func (db *Custom_db) GetQuest(qid int64) (interface{},error) {
 	}
 	return out,nil
 }
+func (db *Custom_db) GetAllUsers() (interface{},error) {
+	rows,err :=db.Query(`SELECT * FROM users WHERE username is not null;`)
+	if err != nil {
+		log.Println(err)
+		return  nil,err
+	}
+
+	skel := reflect.ValueOf(User{"a","a","a",0,[]int{0},[]string{""}})
+	data := RowData(skel,rows)
+	out := make([]User,len(data))
+	fmt.Println(data)
+	fmt.Println(len(data))
+	for i := 0; i<len(data); i++ {
+		out[i].New(data[i])
+	}
+	return out,nil
+}
+func (db *Custom_db) GetAllQuests() (interface{},error) {
+	rows,err := db.Query(`SELECT * FROM quests WHERE questid is not null;`)
+	if err != nil {
+		log.Println(err)
+		return nil,err
+	}
+
+	skel := reflect.ValueOf(Quest{0,"a","a","a",true,0,[]int{0},[]string{""}})
+	data := RowData(skel,rows)
+	out := make([]Quest,len(data))
+	for i := 0; i<len(data); i++ {
+		out[i].New(data[i])
+	}
+	return out,nil
+}
+
 //skel is a skeleton object, of the type you want to store data in.
 //needs one value in each field
 func RowData(skel reflect.Value, rows *sql.Rows) [][]interface{} {
@@ -149,6 +182,7 @@ func RowData(skel reflect.Value, rows *sql.Rows) [][]interface{} {
 			if (ok) {
 				t := reflect.ValueOf(skel_val).Index(0).Kind()
 				if k != reflect.String {
+//De-tabbed to prevent line-wrapping
 		if t == reflect.Int {
 			sep := strings.Split(string(b[1:len(b)-1]),",")
 			intarr := make([]int,len(sep))
@@ -163,6 +197,7 @@ func RowData(skel reflect.Value, rows *sql.Rows) [][]interface{} {
 		}else {
 			fmt.Println("Else")
 		}
+//Re-tabbed
 				} else {
 					v[c] = append(v[c],string(b))
 				}

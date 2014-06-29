@@ -1,8 +1,12 @@
 <script type='text/javascript'> 
 ws.onmessage = function (event) {
 	curDiv = addElement();
-	document.getElementById(curDiv).innerHTML = event.data;
-	reader.readAsBinaryString(event.data);
+	//document.getElementById(curDiv).innerHTML = event.data;
+	if (reader.readyState == 1){
+		queue.push(event.data);
+	} else {
+		reader.readAsBinaryString(event.data);
+	}
 };
 function get(){ 
 	ws.send("get "+document.getElementById("name").value) 
@@ -10,8 +14,11 @@ function get(){
 function store(){ 
 	ws.send("store "+document.getElementById("name").value+" "+document.getElementById("age").value); 
 };
-function getall(){ 
-	ws.send("all");
+function getallUsers(){ 
+	ws.send("get all Users; a");
+};
+function getallQuests(){ 
+	ws.send("get all Quests; a");
 };
 </script>
 <div id='input'>
@@ -19,7 +26,8 @@ name:<input type='text' id='name' name='name' value='oldman'>
 age:<input type='text' id='age' name='age' value='132'>
 <button onclick='get()'>Get</button>
 <button onclick='store()'>Store</button>
-<button onclick='getall()'>Entire Table</button>
+<button onclick='getallUsers()'>All Users</button>
+<button onclick='getallQuests()'>All Quests</button>
 <button onclick='removeElements()'>Clear</button>
 </div>
 <div id='output'></div>
@@ -38,7 +46,12 @@ function removeElements() {
 	};
 };
 var reader = new FileReader();
+var queue = [];
 reader.onload = function(e) {
-	console.log(reader.result);
+	document.getElementById(curDiv).innerHTML += reader.result;
+	if (queue.length == 0)  return ;
+	var i = queue.shift()
+	console.log(i)
+	this.readAsBinaryString(i);
 }
 </script>
