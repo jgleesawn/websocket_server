@@ -1,12 +1,12 @@
 <script type='text/javascript'> 
 ws.onmessage = function (event) {
 	curDiv = addElement();
-	//document.getElementById(curDiv).innerHTML = event.data;
-	if (reader.readyState == 1){
+	document.getElementById(curDiv).innerHTML = event.data;
+	/*if (reader.readyState == 1){
 		queue.push(event.data);
 	} else {
 		reader.readAsBinaryString(event.data);
-	}
+	}*/
 };
 function get(){ 
 	ws.send("get "+document.getElementById("name").value) 
@@ -103,7 +103,7 @@ function removeElements() {
 		out.removeChild(out.childNodes[i])
 	};
 };
-var reader = new FileReader();
+/*var reader = new FileReader();
 var queue = [];
 reader.onload = function(e) {
 	document.getElementById(curDiv).innerHTML += reader.result;
@@ -112,4 +112,5 @@ reader.onload = function(e) {
 	console.log(i)
 	this.readAsBinaryString(i);
 }
+*/
 </script>
