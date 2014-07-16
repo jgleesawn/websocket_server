@@ -71,14 +71,14 @@ func (x *noencWs) Write(p []byte) (n int, err error){
 		end = x.PayloadLen
 	}
 	for end < len(p) {
-		err = x.WriteMessage(websocket.BinaryMessage,p[start:end])
+		err = x.WriteMessage(websocket.TextMessage,p[start:end])
 		if err != nil {
 			return start,err
 		}
 		start = end
 		end += x.PayloadLen
 	}
-	err = x.WriteMessage(websocket.BinaryMessage,p[start:len(p)])
+	err = x.WriteMessage(websocket.TextMessage,p[start:len(p)])
 	if err != nil {
 		return start,err
 	}
