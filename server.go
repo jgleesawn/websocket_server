@@ -65,6 +65,7 @@ type noencWs struct {
 	PayloadLen	int
 }
 func (x *noencWs) Write(p []byte) (n int, err error){
+	/*
 	start := 0
 	end := len(p)
 	if end > x.PayloadLen {
@@ -78,9 +79,11 @@ func (x *noencWs) Write(p []byte) (n int, err error){
 		start = end
 		end += x.PayloadLen
 	}
-	err = x.WriteMessage(websocket.TextMessage,p[start:len(p)])
+	*/
+	err = x.WriteMessage(websocket.TextMessage,p)
 	if err != nil {
-		return start,err
+		return 0,err
+		//return start,err
 	}
 	return len(p),err
 }
