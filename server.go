@@ -91,6 +91,7 @@ func (x *noencWs) Read(p []byte) (n int, err error){
 	return l,err
 }
 func wsnoencHandler(res http.ResponseWriter, req *http.Request){
+	log.Println(req.Header)
 	conn, err := upgrader.Upgrade(res,req,nil)
 	if err != nil {
 		log.Println(err)
