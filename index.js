@@ -39,11 +39,11 @@ function prepQuest(){
 	qdesc = '"'+document.getElementById('description').value+'"'
 	qcat = '"'+document.getElementById('category').value+'"'
 	qrec = document.getElementById('recurringtrue').checked == 'true' ? true : false
-	qxp = parseInt(document.getElementById('Xp').value)
+	qxp = parseInt(document.getElementById('Xpvalue').value)
 	qreq = '['+reqquest+']'
 	qattr = '['+questattr+']'
 
-	str = '{"Questid":'+qid+',"Name":'+qname+',"Description":'+qdesc+',"Category":'+qcat+',"Recurring":'+qrec+',"Xp":'+qxp+',"Requiredquests":'+qreq+',"Attributes":'+qattr+'}'
+	str = '{"Questid":'+qid+',"Name":'+qname+',"Description":'+qdesc+',"Category":'+qcat+',"Recurring":'+qrec+',"Xpvalue":'+qxp+',"Requiredquests":'+qreq+',"Attributes":'+qattr+'}'
 	return str
 }
 function AddQuest(){
@@ -77,7 +77,7 @@ description<input type='text' id='description' name='description' value='descrip
 category<input type='text' id='category' name='category' value='category'><br>
 recurring<br><input type='radio' id='recurringtrue' name='recurring' value='true'>true<br>
 <input type='radio' id='recurringfalse' name='recurring' value='false'>false<br>
-xp<input type='number' id='Xp' name='Xp' min='0' max='10000'> <br>
+xp<input type='number' id='Xpvalue' name='Xpvalue' min='0' max='10000'> <br>
 add required quest<input type='number' id='reqquest' name='reqquest' min='0' max='10000'><button onclick='AppendQuestReq()'>Add Req Quest </button><br>
 add attribute<input type='text' id='attribute' name='attribute' value='attribute'><button onclick='AppendAttribute()'>Add Attribute</button><br>
 <button onclick='AddQuest()'>Add Quest</button><button onclick='UpdateQuest()'>Update Quest</button> <br>

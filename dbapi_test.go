@@ -28,6 +28,7 @@ func TestSuite(t *testing.T) {
 	q.Name = "update"
 	q.Requiredquests = []int{0,1}
 	q.Attributes = []string{"updates","quest"}
+	q.Xpvalue = 10000
 	succ = db.UpdateQuest(q) 
 	if succ == false {
 		t.Fail()
@@ -55,6 +56,10 @@ func TestSuite(t *testing.T) {
 	}
 	fmt.Println(ru)
 	quest,err := db.GetQuest(0)
+	rq := Quest(quest.([]Quest)[0])
+	if rq.Xpvalue != 10000 {
+		t.Fail()
+	}
 	if err != nil {
 		t.Fail()
 	}
