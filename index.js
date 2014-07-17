@@ -47,10 +47,10 @@ function prepQuest(){
 	return str
 }
 function AddQuest(){
-	ws.send("add Quest;"+str)
+	ws.send("add Quest;"+prepQuest())
 }
 function UpdateQuest(){
-	ws.send("update Quest;"+str)
+	ws.send("update Quest;"+prepQuest())
 }
 function AppendQuestReq() {
 	var elem = document.getElementById("reqquest")
