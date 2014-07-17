@@ -17,8 +17,12 @@ func (quest *Quest) New(vars []interface{}) {
 	quest.Category = vars[3].(string)
 	quest.Recurring = vars[4].(bool)
 	quest.Xpvalue = vars[5].(int64)
-	quest.Requiredquests = vars[6].([]int)
-	quest.Attributes = vars[7].([]string)
+	for _,i := range vars[6].([]int) {
+		quest.Requiredquests = append(quest.Requiredquests,i)
+	}
+	for _,str := range vars[7].([]string) {
+		quest.Attributes = append(quest.Attributes,str)
+	}
 }
 type User struct {
 	Username	string	`db:"Username"`
@@ -33,6 +37,10 @@ func (user *User) New(vars []interface{}){
 	user.Firstname = vars[1].(string)
 	user.Lastname = vars[2].(string)
 	user.Xp = vars[3].(int64)
-	user.Completedquests = vars[4].([]int)
-	user.Attributes = vars[5].([]string)
+	for _,i := range vars[4].([]int) {
+		user.Completedquests = append(user.Completedquests,i)
+	}
+	for _,str := range vars[5].([]string) {
+		user.Attributes = append(user.Attributes,str)
+	}
 }

@@ -182,22 +182,19 @@ func RowData(skel reflect.Value, rows *sql.Rows) [][]interface{} {
 			if (ok) {
 				t := reflect.ValueOf(skel_val).Index(0).Kind()
 				if k != reflect.String {
-//De-tabbed to prevent line-wrapping
-		if t == reflect.Int {
-			sep := strings.Split(string(b[1:len(b)-1]),",")
-			intarr := make([]int,len(sep))
-			for j,s := range sep {
-				intarr[j],_ = strconv.Atoi(s)
-			}
-			v[c] = append(v[c],intarr)
-		}else if t == reflect.String {
-			sep := strings.Split(string(b[1:len(b)-1]),",")
-			strarr := make([]string,len(sep))
-			v[c] = append(v[c],strarr)
-		}else {
-			fmt.Println("Else")
-		}
-//Re-tabbed
+					if t == reflect.Int {
+						sep := strings.Split(string(b[1:len(b)-1]),",")
+						intarr := make([]int,len(sep))
+						for j,s := range sep {
+							intarr[j],_ = strconv.Atoi(s)
+						}
+						v[c] = append(v[c],intarr)
+					}else if t == reflect.String {
+						sep := strings.Split(string(b[1:len(b)-1]),",")
+						v[c] = append(v[c],sep)
+					}else {
+						fmt.Println("Else")
+					}
 				} else {
 					v[c] = append(v[c],string(b))
 				}
@@ -209,6 +206,7 @@ func RowData(skel reflect.Value, rows *sql.Rows) [][]interface{} {
 		}
 		c++
 	}
+	//fmt.Println(v)
 	return v
 }
 

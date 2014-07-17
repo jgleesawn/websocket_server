@@ -24,7 +24,10 @@ func TestSuite(t *testing.T) {
 		//t.Fail()
 	}
 
+	q.Questid = 0
 	q.Name = "update"
+	q.Requiredquests = []int{0,1}
+	q.Attributes = []string{"updates","quest"}
 	succ = db.UpdateQuest(q) 
 	if succ == false {
 		t.Fail()
@@ -32,17 +35,26 @@ func TestSuite(t *testing.T) {
 
 	u.Firstname = "update"
 	u.Completedquests = []int{3000,200,0}
+	u.Attributes = []string{"fast","strong"}
 	succ = db.UpdateUser(u)
 	if succ == false {
 		t.Fail()
 	}
 
-	name,err := db.GetUser("testing_username")
+	fmt.Println("Getting Data.")
+
+	ret,err := db.GetUser("testing_username")
+	ru := User(ret.([]User)[0])
+	//fmt.Println(ru)
+	if ru.Attributes[0] != "fast" && ru.Attributes[0] != "strong" {
+		//fmt.Println(ru.Attributes)
+		t.Fail()
+	}
 	if err != nil {
 		t.Fail()
 	}
-	fmt.Println(name)
-	quest,err := db.GetQuest(1)
+	fmt.Println(ru)
+	quest,err := db.GetQuest(0)
 	if err != nil {
 		t.Fail()
 	}
