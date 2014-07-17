@@ -123,7 +123,7 @@ func (db *Custom_db) GetQuest(qid int64) (interface{},error) {
 	return out,nil
 }
 func (db *Custom_db) GetAllUsers() (interface{},error) {
-	rows,err :=db.Query(`SELECT * FROM users WHERE username is not null;`)
+	rows,err :=db.Query(`SELECT * FROM users WHERE username is not null ORDER BY username ASC;`)
 	if err != nil {
 		log.Println(err)
 		return  nil,err
@@ -140,7 +140,7 @@ func (db *Custom_db) GetAllUsers() (interface{},error) {
 	return out,nil
 }
 func (db *Custom_db) GetAllQuests() (interface{},error) {
-	rows,err := db.Query(`SELECT * FROM quests WHERE questid is not null;`)
+	rows,err := db.Query(`SELECT * FROM quests WHERE questid is not null ORDER BY questid ASC;`)
 	if err != nil {
 		log.Println(err)
 		return nil,err
