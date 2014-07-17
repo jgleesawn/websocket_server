@@ -38,7 +38,7 @@ function prepQuest(){
 	qname = '"'+document.getElementById('questname').value+'"'
 	qdesc = '"'+document.getElementById('description').value+'"'
 	qcat = '"'+document.getElementById('category').value+'"'
-	qrec = document.getElementById('recurringtrue').value == 'true' ? true : false
+	qrec = document.getElementById('recurringtrue').checked == 'true' ? true : false
 	qxp = parseInt(document.getElementById('Xp').value)
 	qreq = '['+reqquest+']'
 	qattr = '['+questattr+']'
