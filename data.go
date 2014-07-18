@@ -4,23 +4,30 @@ type Quest struct {
 	Questid		int64
 	Name		string
 	Description	string
+	Notes		string
 	Category	string
 	Recurring	bool
 	Xpvalue		int64
+	Image		string
 	Requiredquests	[]int
 	Attributes	[]string
+}
+func NewQuest() Quest {
+	return Quest{0,"a","a","a","a",false,0,"a",[]int{0},[]string{"a"}}
 }
 func (quest *Quest) New(vars []interface{}) {
 	quest.Questid = vars[0].(int64)
 	quest.Name = vars[1].(string)
 	quest.Description = vars[2].(string)
-	quest.Category = vars[3].(string)
-	quest.Recurring = vars[4].(bool)
-	quest.Xpvalue = vars[5].(int64)
-	for _,i := range vars[6].([]int) {
+	quest.Notes = vars[3].(string)
+	quest.Category = vars[4].(string)
+	quest.Recurring = vars[5].(bool)
+	quest.Xpvalue = vars[6].(int64)
+	quest.Image = vars[7].(string)
+	for _,i := range vars[8].([]int) {
 		quest.Requiredquests = append(quest.Requiredquests,i)
 	}
-	for _,str := range vars[7].([]string) {
+	for _,str := range vars[9].([]string) {
 		quest.Attributes = append(quest.Attributes,str)
 	}
 }

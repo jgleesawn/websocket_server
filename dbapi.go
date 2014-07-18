@@ -59,8 +59,9 @@ row := db.QueryRow(`SELECT questid FROM quests ORDER BY questid DESC LIMIT 1;`)
 	} else {
 		q.Questid = prev_id + 1
 	}
-	strq := []string{`INSERT INTO quests VALUES(`,`,`,`,`,`,`,`,`,`,`,`,ARRAY[`,`],ARRAY[`,`]);`}
-	str,varargs := unroll_query(strq,q.Questid,q.Name,q.Description,q.Category,q.Recurring,q.Xpvalue,q.Requiredquests,q.Attributes)
+	colstr := `(questid,name,description,notes,category,recurring,xpvalue,image,requiredquests,attributes)`
+	strq := []string{`INSERT INTO quests `+colstr+` VALUES(`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,`,ARRAY[`,`],ARRAY[`,`]);`}
+	str,varargs := unroll_query(strq,q.Questid,q.Name,q.Description,q.Notes,q.Category,q.Recurring,q.Xpvalue,q.Image,q.Requiredquests,q.Attributes)
 	_,err = db.Query(str,varargs...)
 	if err != nil {
 		log.Println(err)
@@ -81,8 +82,9 @@ func (db *Custom_db) UpdateUser(u *User) (bool){
 }
 
 func (db *Custom_db) UpdateQuest(q *Quest) (bool){
-	strq := []string{`UPDATE quests SET (name, description, category, recurring, xpvalue, requiredquests, attributes) = (`,`,`,`,`,`,`,`,`,`,ARRAY[`,`],ARRAY[`,`]) WHERE questid = `,`;`}
-	str,varargs := unroll_query(strq,q.Name,q.Description,q.Category,q.Recurring,q.Xpvalue,q.Requiredquests,q.Attributes,q.Questid)
+	colstr := `(name,description,notes,category,recurring,xpvalue,image,requiredquests,attributes)`
+	strq := []string{`UPDATE quests SET `+colstr+` = (`,`,`,`,`,`,`,`,`,`,`,`,`,`,ARRAY[`,`],ARRAY[`,`]) WHERE questid = `,`;`}
+	str,varargs := unroll_query(strq,q.Name,q.Description,q.Notes,q.Category,q.Recurring,q.Xpvalue,q.Image,q.Requiredquests,q.Attributes,q.Questid)
 //	fmt.Println(str)
 	_,err := db.Query(str,varargs...)
 	if err != nil {
@@ -108,13 +110,14 @@ func (db *Custom_db) GetUser(u string) (interface{},error) { //(*User){
 	return out,nil
 }
 func (db *Custom_db) GetQuest(qid int64) (interface{},error) {
-	rows,err := db.Query(`SELECT * FROM quests WHERE questid = $1;`,qid)
+	colstr := `questid,name,description,notes,category,recurring,xpvalue,image,requiredquests,attributes`
+	rows,err := db.Query(`SELECT `+colstr+` FROM quests WHERE questid = $1;`,qid)
 	if err != nil {
 		log.Println(err)
 		return nil,err
 	}
 
-	skel := reflect.ValueOf(Quest{0,"a","a","a",true,0,[]int{0},[]string{""}})
+	skel := reflect.ValueOf(NewQuest())
 	data := RowData(skel,rows)
 	out := make([]Quest,len(data))
 	for i := 0; i<len(data); i++ {
@@ -140,13 +143,14 @@ func (db *Custom_db) GetAllUsers() (interface{},error) {
 	return out,nil
 }
 func (db *Custom_db) GetAllQuests() (interface{},error) {
-	rows,err := db.Query(`SELECT * FROM quests WHERE questid is not null ORDER BY questid ASC;`)
+	colstr := `questid,name,description,notes,category,recurring,xpvalue,image,requiredquests,attributes`
+	rows,err := db.Query(`SELECT `+colstr+` FROM quests WHERE questid is not null ORDER BY questid ASC;`)
 	if err != nil {
 		log.Println(err)
 		return nil,err
 	}
 
-	skel := reflect.ValueOf(Quest{0,"a","a","a",true,0,[]int{0},[]string{""}})
+	skel := reflect.ValueOf(NewQuest())
 	data := RowData(skel,rows)
 	out := make([]Quest,len(data))
 	for i := 0; i<len(data); i++ {
