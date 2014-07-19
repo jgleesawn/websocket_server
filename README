@@ -2,3 +2,23 @@ Requires postgresql with user in it and db_name that user can write to.
 Requires environment variable:
 DATABASE_URL=postgres://user:password@address/db_name
 meant to work with heroku's postgresql system.
+
+CREATE TABLE quests (
+questid			int		PRIMARY KEY,
+name			text	NOT NULL,
+description		text	NOT NULL,
+notes			text	NOT NULL,
+category		text	NOT NULL,
+recurring		boolean	NOT NULL,
+xpvalue			int		NOT NULL,
+image			text	NOT NULL,
+requiredquests	[]int			,
+attributes		[]text			
+);
+
+ALTER TABLE quests ADD notes text;
+ALTER TABLE quests ADD image text;
+UPDATE quests SET notes='';
+UPDATE quests SET image='';
+ALTER TABLE quests ALTER notes SET NOT NULL;
+ALTER TABLE quests ALTER image SET NOT NULL;

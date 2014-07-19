@@ -60,12 +60,11 @@ type wsinterface interface {
 	ReadMessage()(int,[]byte,error)
 }
 type noencWs struct {
-	wsinterface
+	*websocket.Conn //wsinterface
 	PacketSize	int
 	PayloadLen	int
 }
-func (x *noencWs) Write(p []byte) (n int, err error){
-	/*
+func (x noencWs) Write(p []byte) (n int, err error){
 	start := 0
 	end := len(p)
 	if end > x.PayloadLen {
@@ -79,15 +78,13 @@ func (x *noencWs) Write(p []byte) (n int, err error){
 		start = end
 		end += x.PayloadLen
 	}
-	*/
-	err = x.WriteMessage(websocket.TextMessage,p)
+	err = x.WriteMessage(websocket.TextMessage,p[start:len(p)])
 	if err != nil {
-		return 0,err
-		//return start,err
+		return start,err
 	}
 	return len(p),err
 }
-func (x *noencWs) Read(p []byte) (n int, err error){
+func (x noencWs) Read(p []byte) (n int, err error){
 	_,data,err := x.ReadMessage()
 	l := len(data)
 	copy(p[:l],data)
@@ -283,6 +280,14 @@ func process(data []byte, db Custom_db, conn io.ReadWriter){//*ECC_Conn.ECC_Conn
 				break
 			}
 			break
+		case "close":
+			d,_ := time.ParseDuration("1m")
+			t := time.Now().Add(d)
+			fmt.Println(t)
+			conn.(*noencWs).Conn.WriteControl(websocket.CloseMessage,[]byte("Closing Connection."),t)//Add(time.Duration.ParseDuration("2m")))
+			fmt.Println("Wrote Control Message.")
+			//conn.Close()
+			return
 	}
 	//fmt.Println(out)
 	conn.Write(out)
