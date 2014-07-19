@@ -284,7 +284,7 @@ func process(data []byte, db Custom_db, conn io.ReadWriter){//*ECC_Conn.ECC_Conn
 			d,_ := time.ParseDuration("1m")
 			t := time.Now().Add(d)
 			fmt.Println(t)
-			conn.(*noencWs).Conn.WriteControl(websocket.CloseMessage,[]byte("Closing Connection."),t)//Add(time.Duration.ParseDuration("2m")))
+			conn.(*noencWs).Conn.WriteControl(websocket.CloseMessage,[]byte{},t)//Add(time.Duration.ParseDuration("2m")))
 			fmt.Println("Wrote Control Message.")
 			//conn.Close()
 			return
